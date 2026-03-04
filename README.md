@@ -262,4 +262,5 @@ Este un exemplu de integrare între:
 
 ---
 Vă mulțumesc pentru atenție.
+
 Autor: Sorinescu Adrian
