@@ -1,0 +1,334 @@
+PASCAL:
+
+PROGRAM MAIN
+VAR
+    nivel : INT;
+END_VAR
+
+nivel := GET_VAL();
+
+IF I0_0 THEN
+
+    IF nivel > 80 THEN
+        Q0_0 := FLASH(150);
+    ELSE
+        IF nivel > 50 THEN
+            Q0_0 := FLASH(500);
+        ELSE
+            Q0_0 := FALSE;
+        END_IF;
+    END_IF;
+
+ELSE
+    Q0_0 := FALSE;
+END_IF;
+
+
+///////////////////////////////////////////////////////////////
+
+PROGRAM MAIN
+
+nivel := GET_VAL();
+
+// apel TON (3 secunde = 3000 ms)
+t1.update(nivel > 80 AND I0_0, 3000);
+
+IF I0_0 THEN
+
+    IF t1.Q THEN
+        Q0_0 := FLASH(150);
+
+    ELSE
+        IF nivel > 50 THEN
+            Q0_0 := FLASH(500);
+        ELSE
+            Q0_0 := FALSE;
+        END_IF;
+
+    END_IF;
+
+ELSE
+    Q0_0 := FALSE;
+
+END_IF;
+
+
+/////////////////////////////////////////////////////////
+
+PROGRAM MAIN
+
+nivel := GET_VAL();
+
+// apel TON (3 secunde = 3000 ms)
+t1.update(nivel > 80 AND I0_0 AND I0_1, 3000);
+
+IF I0_0 AND I0_1 THEN
+
+    IF t1.Q THEN
+        Q0_0 := FLASH(150);
+        Q0_1 := FALSE;
+
+    ELSE
+        IF nivel > 50 THEN
+            Q0_1 := FLASH(500);
+            Q0_0 := FALSE;
+        ELSE
+            Q0_0 := FALSE;
+            Q0_1 := FALSE;
+        END_IF;
+
+    END_IF;
+
+ELSE
+    Q0_0 := FALSE;
+    Q0_1 := FALSE;
+
+END_IF;
+
+/////////////////////////////////////////////////////////
+
+PROGRAM MAIN
+VAR
+    nivel : INT;
+    t1    : TON; 
+    timp  : INT;
+END_VAR
+
+nivel := GET_VAL();
+
+// Stabilim timpul în funcție de zonă
+IF nivel >= 90 THEN
+    timp := 3000;      // HIGH = 3 sec
+ELSE
+    IF nivel <= 15 THEN
+        timp := 10000;  // LOW = 10 sec
+    ELSE
+        timp := 0;
+    END_IF;
+END_IF;
+
+// Pornim timerul doar în zone critice
+t1.update((nivel >= 90 OR nivel <= 15) AND I0_0 AND I0_1, timp);
+
+IF I0_0 AND I0_1 THEN
+
+    IF t1.Q THEN
+
+        IF nivel >= 90 THEN
+            Q0_0 := FLASH(150);   // HIGH
+            Q0_1 := FALSE;
+            Q0_2 := FALSE;
+            Q0_3 := FALSE;
+
+        ELSE
+            IF nivel <= 15 THEN
+                Q0_3 := FLASH(150);  // LOW
+                Q0_0 := FALSE;
+                Q0_1 := FALSE;
+                Q0_2 := FALSE;
+            END_IF;
+        END_IF;
+
+    ELSE
+        IF nivel <= 50 THEN 
+            Q0_1 := FLASH(3000);
+            Q0_0 := FALSE;
+            Q0_2 := FALSE;
+            Q0_3 := FALSE;
+        ELSE
+            Q0_0 := FALSE;
+            Q0_1 := FALSE;
+            Q0_2 := TRUE;
+            Q0_3 := FALSE;
+        END_IF;
+    END_IF;
+
+ELSE
+    Q0_0 := FALSE;
+    Q0_1 := FALSE;
+    Q0_2 := FALSE;
+    Q0_3 := FALSE;
+END_IF;
+
+END_PROGRAM
+
+
+//////////////////////////////////////////////////////////////////
+
+
+JS:
+
+let nivel = parseInt(document.getElementById('iw0-slider').value);
+
+if (I0_0) {
+
+    if (nivel > 80) {
+        Q0_0 = FLASH(150);
+    } else {
+
+        if (nivel > 50) {
+            Q0_0 = FLASH(500);
+        } else {
+            Q0_0 = false;
+        }
+
+    }
+
+} else {
+    Q0_0 = false;
+}
+
+///////////////////////////////////////////
+
+
+nivel = parseInt(document.getElementById('iw0-slider').value);
+
+// apel TON (3 secunde = 3000 ms)
+t1.update(nivel > 80 && I0_0, 3000);
+
+if (I0_0) {
+
+    if (t1.Q) {
+        Q0_0 = FLASH(150);
+
+    } else {
+        if (nivel > 50) {
+            Q0_0 = FLASH(500);
+        } else {
+            Q0_0 = false;
+        }
+    }
+
+} else {
+    Q0_0 = false;
+}
+
+////////////////////////////////////////////////////
+
+Nivel = parseInt(document.getElementById('iw0-slider').value);
+
+// TON 3 secunde
+t1.update(Nivel > 80 && I0_0, 3000);
+
+if (I0_0 && I0_1) {
+
+    if (t1.Q) {
+
+        Q0_0 = FLASH(150);
+        Q0_1 = false;
+
+    } else {
+
+        if (Nivel > 50) {
+            Q0_1 = FLASH(500);
+            Q0_0 = false;
+        } else {
+            Q0_0 = false;
+            Q0_1 = false;
+        }
+
+    }
+
+} else {
+    Q0_0 = false;
+    Q0_1 = false;
+}
+
+////////////////////////////////////////////////////////
+
+
+Nivel = parseInt(document.getElementById('iw0-slider').value);
+
+// TON 3 secunde
+t1.update(Nivel > 80 && I0_0 && I0_1, 3000);
+
+if (I0_0 && I0_1) {
+
+    if (t1.Q) {
+
+        Q0_0 = FLASH(150);
+        Q0_1 = false;
+
+    } else {
+
+        if (Nivel > 50) {
+            Q0_1 = FLASH(500);
+            Q0_0 = false;
+        } else {
+            Q0_0 = false;
+            Q0_1 = false;
+        }
+
+    }
+
+} else {
+    Q0_0 = false;
+    Q0_1 = false;
+}
+
+//////////////////////////////////////////////////////////////
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+function compilePascal(st) {
+    return st
+    .replace(/\(\*[\s\S]*?\*\)/g, '')
+    .replace(/PROGRAM\s+\w+/gi, '')
+    .replace(/END_PROGRAM/gi, '')
+    .replace(/VAR[\s\S]*?END_VAR/gi, '')
+    .replace(/\bAND\b/gi, '&&')
+    .replace(/\bOR\b/gi, '||')
+    .replace(/\bNOT\b/gi, '!')
+    .replace(/<>/g, '!=')
+    .replace(/GET_VAL\(\)/gi, "parseInt(document.getElementById('iw0-slider').value)")
+    .replace(/FLASH\((\d+)\)/gi, "FLASH($1)")
+    .replace(/TRUE/gi, 'true')
+    .replace(/FALSE/gi, 'false')
+    .replace(/:=/g, '=')
+    .replace(/ELSIF/gi, '} else if')
+    .replace(/IF\s+(.+?)\s*THEN/gi, 'if($1){')
+    .replace(/\)\s*THEN/gi, '){')
+    .replace(/ELSE/gi, '}else{')
+    .replace(/END_IF;?/gi, '}');
+	.replace(/\bMOD\b/gi, '%')
+	.replace(/\bXOR\b/gi, '^')
+	.replace(/FOR\s+(\w+)\s*:=\s*(.+?)\s+TO\s+(.+?)\s+DO/gi, 'for(let $1=$2; $1<=$3; $1++){')
+	.replace(/END_FOR;?/gi, '}')
+	.replace(/WHILE\s+(.+?)\s+DO/gi, 'while($1){')
+	.replace(/END_WHILE;?/gi, '}')
+	.replace(/ABS\(/gi, 'Math.abs(')
+	.replace(/SQRT\(/gi, 'Math.sqrt(')
+	.replace(/SIN\(/gi, 'Math.sin(')
+	.replace(/COS\(/gi, 'Math.cos(')
+	.replace(/TAN\(/gi, 'Math.tan(')
+	.replace(/EXP\(/gi, 'Math.exp(')
+	.replace(/LN\(/gi, 'Math.log(') // În ST LN este logaritm natural, în JS este Math.log
+	.replace(/LIMIT\((.+?),\s*(.+?),\s*(.+?)\)/gi, 'Math.min(Math.max($2, $1), $3)')
+	.replace(/SEL\((.+?),\s*(.+?),\s*(.+?)\)/gi, '(($1) ? $3 : $2)')
+	.replace(/R_TRIG\((.+?)\)/gi, 'updateR_TRIG("$1", $1)')
+	.replace(/F_TRIG\((.+?)\)/gi, 'updateF_TRIG("$1", $1)')
+	.replace(/TON\((.+?),\s*(.+?),\s*(.+?)\)/gi, 'updateTON("$1", $2, $3)')
+	.replace(/TOF\((.+?),\s*(.+?),\s*(.+?)\)/gi, 'updateTOF("$1", $2, $3)')
+	
+
+}
