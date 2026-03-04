@@ -1,11 +1,6 @@
 # TwinCAT-simulator-PLC
 Simulator PLC cu care se poate testa: Cod PASCAL Structured Text și JavaScript.
 <img width="806" height="907" alt="image" src="https://github.com/user-attachments/assets/ee7744cd-1101-4aa6-8d05-b665a846d362" />
-
-Îți pregătesc o **prezentare publică structurată, profesională**, pe care o poți susține în fața unei clase, la licență/master sau într-o companie de automatizări.
-
-Tema: **Simulator PLC + HMI inspirat din Beckhoff TwinCAT**
-
 ---
 
 # 🎤 PREZENTARE PUBLICĂ
