@@ -261,8 +261,5 @@ Este un exemplu de integrare între:
 * Modelare sisteme în timp real
 
 ---
-
-# 🎯 Încheiere
-
 Vă mulțumesc pentru atenție.
-
+Autor: Sorinescu Adrian
