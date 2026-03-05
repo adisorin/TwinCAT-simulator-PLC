@@ -1,6 +1,10 @@
 # TwinCAT-simulator-PLC
 Simulator PLC cu care se poate testa: Cod PASCAL Structured Text și JavaScript.
 <img width="806" height="907" alt="image" src="https://github.com/user-attachments/assets/ee7744cd-1101-4aa6-8d05-b665a846d362" />
+
+# TwinCAT-simulator-PLC-V2-andon
+<img width="805" height="901" alt="image" src="https://github.com/user-attachments/assets/00c407b7-e667-4e47-b32e-53c2ac64d697" />
+
 ---
 
 # 🎤 PREZENTARE PUBLICĂ
