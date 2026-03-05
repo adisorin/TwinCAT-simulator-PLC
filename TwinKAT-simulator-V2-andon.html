@@ -1,0 +1,517 @@
+<!DOCTYPE html>
+<html lang="ro">
+<head>
+    <meta charset="UTF-8">
+    <title>Beckhoff TwinCAT HMI & PLC Simulator</title>
+    <style>
+        :root { --beckhoff-red: #cc0000; --panel-gray: #e0e0e0; --hmi-bg: #2b2b2b; }
+				/* ==== FIX ANDON POSITION ==== */
+		.hmi-screen {
+			position: relative; /* Referință pentru poziționare absolută */
+			background: var(--hmi-bg);
+			border-radius: 5px;
+			padding: 15px;
+			color: white;
+			border: 4px solid #555;
+		}
+
+		#andon-vertical {
+			position: absolute;
+			bottom: 20px; /* distanța față de baza HMI-ului */
+			right: 30px;  /* distanța față de marginea dreaptă */
+			display: flex;
+			flex-direction: column;
+			align-items: center;
+			gap: 5px;
+		}
+        body { font-family: 'Segoe UI', sans-serif; background: #f4f4f4; display: flex; flex-direction: column; align-items: center; padding-top: 20px; }
+        .plc-container { width: 900px; background: var(--panel-gray); border: 2px solid #999; border-radius: 8px; padding: 20px; box-shadow: 0 4px 15px rgba(0,0,0,0.2); }
+        .header { background: var(--beckhoff-red); color: white; padding: 10px; border-radius: 4px; font-weight: bold; text-align: center; margin-bottom: 15px; }
+        .main-layout { display: grid; grid-template-columns: 1fr 1.2fr; gap: 20px; }
+        input[type=range] { -webkit-appearance: none; width: 100%; height: 10px; border-radius: 5px; background: linear-gradient(to right, #28a745 0%, #ffc107 50%, #dc3545 100%); outline: none; margin: 15px 0; border: 1px solid #999; }
+        input[type=range]::-webkit-slider-thumb { -webkit-appearance: none; appearance: none; width: 22px; height: 22px; background: #fff; border: 2px solid #555; border-radius: 50%; cursor: pointer; box-shadow: 0 2px 5px rgba(0,0,0,0.3); }
+        .hmi-screen { background: var(--hmi-bg); border-radius: 5px; padding: 15px; color: white; border: 4px solid #555; }
+        .tank-container { width: 60px; height: 120px; border: 2px solid #eee; position: relative; margin: 20px auto; background: #333; }
+        .tank-fill { position: absolute; bottom: 0; width: 100%; background: #007bff; transition: height 0.1s; }
+        .diag-log { margin-top: 15px; background: #1e1e1e; color: #d4d4d4; font-family: 'Consolas', monospace; font-size: 11px; height: 555px; overflow-y: auto; padding: 8px; border: 1px solid #555; border-radius: 4px; }
+        .log-entry { margin-bottom: 4px; border-bottom: 1px solid #333; }
+        .log-error { color: #ff4d4d; }
+        .log-info { color: #4db8ff; }
+        .io-panel { background: white; padding: 10px; border-radius: 4px; margin-bottom: 10px; }
+        .led { width: 18px; height: 18px; border-radius: 50%; background: #444; border: 1px solid #222; display: inline-block; }
+        .led.active { background: #00ff00; box-shadow: 0 0 8px #00ff00; }
+        .code-area { width: 100%; height: 440px; font-family: 'Courier New', monospace; font-size: 12px; background: #222; color: #00ff00; border-radius: 4px; margin-top: 5px; padding: 8px; border: 1px solid #444; resize: none; }
+        .btn-run { background: #28a745; color: white; border: none; padding: 8px 15px; cursor: pointer; border-radius: 4px; }
+        .btn-stop { background: #dc3545; color: white; border: none; padding: 8px 15px; cursor: pointer; border-radius: 4px; }
+        .btn-reset { background: #0056b3; color: white; border: none; padding: 8px 15px; cursor: pointer; border-radius: 4px; }
+		.btn-reset:hover { background: #dc3545; /* Codul pentru roșu */ }
+        .status-bar { font-weight: bold; margin: 10px 0; }
+
+        #lang-selector { width: 100%; padding: 5px; background: #333; color: white; border: 1px solid #555; border-radius: 4px; font-size: 12px; }
+		
+		/* ==== BECURI ANDON ==== */
+		.andon-3d { 
+			width: 40px;
+			height: 60px;
+			border-radius: 6px;
+			box-shadow: inset 0 4px 10px rgba(255,255,255,0.1),
+						inset 0 -4px 6px rgba(0,0,0,0.5),
+						0 4px 8px rgba(0,0,0,0.3);
+			transition: all 0.2s;
+		}
+
+		/* ==== CULORI STINSE (subtile) ==== */
+		.red-off     { background: linear-gradient(to bottom, #330000 0%, #110000 100%); }
+		.orange-off  { background: linear-gradient(to bottom, #442211 0%, #221100 100%); }
+		.green-off   { background: linear-gradient(to bottom, #113311 0%, #002200 100%); }
+		.blue-off    { background: linear-gradient(to bottom, #113366 0%, #001122 100%); }
+
+		/* ==== CULORI ACTIVE ==== */
+		.active-red     { background: linear-gradient(to bottom, #ff4d4d 0%, #cc0000 100%);
+						  box-shadow: inset 0 4px 8px rgba(255,255,255,0.3),
+									  inset 0 -4px 6px rgba(0,0,0,0.5),
+									  0 4px 12px rgba(255,0,0,0.6);}
+		.active-orange  { background: linear-gradient(to bottom, #ffb84d 0%, #ff8800 100%);
+						  box-shadow: inset 0 4px 8px rgba(255,255,255,0.3),
+									  inset 0 -4px 6px rgba(0,0,0,0.5),
+									  0 4px 12px rgba(255,136,0,0.6);}
+		.active-green   { background: linear-gradient(to bottom, #80ff4d 0%, #00cc00 100%);
+						  box-shadow: inset 0 4px 8px rgba(255,255,255,0.3),
+									  inset 0 -4px 6px rgba(0,0,0,0.5),
+									  0 4px 12px rgba(0,255,0,0.6);}
+		.active-blue    { background: linear-gradient(to bottom, #4db8ff 0%, #0099ff 100%);
+						  box-shadow: inset 0 4px 8px rgba(255,255,255,0.3),
+									  inset 0 -4px 6px rgba(0,0,0,0.5),
+									  0 4px 12px rgba(0,153,255,0.6);}
+    </style>
+</head>
+<body>
+
+<div class="plc-container">
+    <div class="header">BECKHOFF - TwinCAT Integrated Simulator</div>
+    <div class="main-layout">
+        <div class="logic-panel">
+			<div class="io-panel">
+
+				<!-- INPUTURI -->
+				<div style="font-weight:bold; margin-bottom:8px;">DIGITAL INPUTS</div>
+
+				<div style="display:flex; justify-content:space-between; margin-bottom:6px;">
+					<span>I0_0: <button onclick="toggleInput(0)">Toggle</button></span>
+					<div id="led-in-0" class="led"></div>
+				</div>
+
+				<div style="display:flex; justify-content:space-between; margin-bottom:6px;">
+					<span>I0_1: <button onclick="toggleInput(1)">Toggle</button></span>
+					<div id="led-in-1" class="led"></div>
+				</div>
+
+				<div style="display:flex; justify-content:space-between; margin-bottom:6px;">
+					<span>I0_2: <button onclick="toggleInput(2)">Toggle</button></span>
+					<div id="led-in-2" class="led"></div>
+				</div>
+
+				<div style="display:flex; justify-content:space-between; margin-bottom:10px;">
+					<span>I0_3: <button onclick="toggleInput(3)">Toggle</button></span>
+					<div id="led-in-3" class="led"></div>
+				</div>
+
+				<hr>
+
+				<!-- OUTPUTURI -->
+				<div style="font-weight:bold; margin-bottom:8px;">DIGITAL OUTPUTS</div>
+
+				<div style="display:flex; justify-content:space-between; margin-bottom:6px;">
+					<span>Q0_0:</span>
+					<div id="led-out-0" class="led"></div>
+				</div>
+
+				<div style="display:flex; justify-content:space-between; margin-bottom:6px;">
+					<span>Q0_1:</span>
+					<div id="led-out-1" class="led"></div>
+				</div>
+
+				<div style="display:flex; justify-content:space-between; margin-bottom:6px;">
+					<span>Q0_2:</span>
+					<div id="led-out-2" class="led"></div>
+				</div>
+
+				<div style="display:flex; justify-content:space-between;">
+					<span>Q0_3:</span>
+					<div id="led-out-3" class="led"></div>
+				</div>
+
+			</div>
+
+            <label>iw0: Senzor Nivel (0-100%):</label>
+            <input type="range" id="iw0-slider" min="0" max="100" value="20" oninput="updateAnalogDisplay(this.value)">
+
+            <div style="margin-top: 10px;">
+                <select id="lang-selector">
+                    <option value="PASCAL">Limbaj: PASCAL / Structured Text (ST)</option>
+                    <option value="JS">Limbaj: JavaScript (JS)</option>
+                </select>
+            </div>
+
+            <textarea id="st-code" class="code-area">introdu cod:</textarea>
+
+            <div style="margin-top:10px; display: flex; gap: 10px;">
+                <button class="btn-reset" onclick="compilePLC()">COMPILE</button>
+                <button class="btn-run" onclick="runPLC()">RUN</button>
+                <button class="btn-stop" onclick="stopPLC('Sistem oprit')">STOP</button>
+                <button class="btn-reset" onclick="resetPLC()">RESET</button>
+            </div>
+
+            <div id="status" class="status-bar" style="color: #666;">Status: Ready</div>
+        </div>
+
+        <div>
+            <div class="hmi-screen">
+                <div style="font-size: 0.8em; color: #aaa; margin-bottom: 10px;">HMI MONITOR</div>
+				<div style="display: flex; justify-content: center; align-items: flex-end; gap: 80px; margin-top: 20px;">
+					<!-- Rezervor -->
+                <div style="text-align: center;">
+                    <div class="tank-container"><div id="tank-fill" class="tank-fill" style="height: 20%;"></div></div>
+                    <div>Nivel: <span id="hmi-val">20</span>%</div>
+                </div>
+
+					<!-- Andon lângă rezervor -->
+					<div style="display:flex; flex-direction: column; align-items: center; gap: 5px;">	
+						<div id="andon-vertical" style="display:flex; flex-direction:column; align-items:center; gap:5px;">
+							<div id="andon-red" class="andon-3d red-off"></div>
+							<div id="andon-orange" class="andon-3d orange-off"></div>
+							<div id="andon-green" class="andon-3d green-off"></div>
+							<div id="andon-blue" class="andon-3d blue-off"></div>
+						</div>
+					</div>
+				</div>
+                <div id="hmi-msg" style="margin-top: 15px; text-align: center; font-weight: bold;">---</div>
+            </div>
+
+            <div class="diag-log" id="diag-log">
+                <div class="log-entry log-info">[SYS] Simulator pregătit.</div>
+            </div>
+        </div>
+    </div>
+</div>
+
+<script>
+
+// ==============================
+// FUNCTION BLOCKS (IEC 61131-3)
+// ==============================
+
+class TON {
+    constructor() {
+        this.IN = false;
+        this.PT = 0;
+        this.Q = false;
+        this.ET = 0;
+        this.startTime = null;
+    }
+
+    update(IN, PT) {
+        if (IN) {
+            if (this.startTime === null) {
+                this.startTime = Date.now();
+            }
+            this.ET = Date.now() - this.startTime;
+            this.Q = this.ET >= PT;
+        } else {
+            this.startTime = null;
+            this.ET = 0;
+            this.Q = false;
+        }
+    }
+}
+
+class TOF {
+    constructor() {
+        this.Q = false;
+        this.startTime = null;
+        this.ET = 0;
+    }
+
+    update(IN, PT) {
+        if (IN) {
+            this.Q = true;
+            this.startTime = null;
+        } else {
+            if (this.startTime === null) {
+                this.startTime = Date.now();
+            }
+            this.ET = Date.now() - this.startTime;
+            if (this.ET >= PT) {
+                this.Q = false;
+            }
+        }
+    }
+}
+
+let rTrigMemory = {};
+let fTrigMemory = {};
+let I = [false, false, false, false];
+let Q = [false, false, false, false];
+let I0_0 = false, I0_1 = false, I0_2 = false, I0_3 = false;
+let Q0_0 = false, Q0_1 = false, Q0_2 = false, Q0_3 = false;
+let Nivel = 0;
+let cycleInterval = null;
+let compiledCode = null;
+let isCompiled = false; // stare reală compilare
+// Instanțe Function Blocks
+let t1 = new TON();
+let t2 = new TOF(); // dacă vrei și TOF
+// FLASH vizibil în simulator
+let flashState = false;
+let lastFlashTime = Date.now();
+
+function updateR_TRIG(name, val) {
+    if (!rTrigMemory[name]) {
+        rTrigMemory[name] = false;
+    }
+
+    let result = val && !rTrigMemory[name];
+    rTrigMemory[name] = val;
+
+    return result;
+}
+
+function updateF_TRIG(name, val) {
+    if (!fTrigMemory[name]) {
+        fTrigMemory[name] = false;
+    }
+
+    let result = !val && fTrigMemory[name];
+    fTrigMemory[name] = val;
+
+    return result;
+}
+
+function FLASH(ms) {
+    const now = Date.now();
+    if (now - lastFlashTime >= ms / 2) {
+        flashState = !flashState;
+        lastFlashTime = now;
+    }
+    return flashState;
+}
+
+function addLog(msg, type = 'info') {
+    const log = document.getElementById('diag-log');
+    log.innerHTML += `<div class="log-entry ${type === 'error' ? 'log-error' : 'log-info'}">[${new Date().toLocaleTimeString()}] ${msg}</div>`;
+    log.scrollTop = log.scrollHeight;
+}
+
+function updateAnalogDisplay(val) {
+    document.getElementById('hmi-val').innerText = val;
+    document.getElementById('tank-fill').style.height = val + "%";
+}
+
+function toggleInput(index) {
+
+    I[index] = !I[index];
+
+    // sincronizare variabile globale
+    I0_0 = I[0];
+    I0_1 = I[1];
+    I0_2 = I[2];
+    I0_3 = I[3];
+
+    document.getElementById('led-in-' + index)
+        .classList.toggle('active', I[index]);
+
+    addLog(`I0_${index}: ${I[index]}`);
+}
+
+function updateTON(name, IN, PT) {
+    if (!window[name]) {
+        window[name] = new TON();
+    }
+    window[name].update(IN, PT);
+    return window[name].Q;
+}
+
+function updateTOF(name, IN, PT) {
+    if (!window[name]) {
+        window[name] = new TOF();
+    }
+    window[name].update(IN, PT);
+    return window[name].Q;
+}
+
+function compilePascal(st) {
+    return st
+        .replace(/\(\*[\s\S]*?\*\)/g, '')
+        .replace(/PROGRAM\s+\w+/gi, '')
+        .replace(/END_PROGRAM/gi, '')
+        .replace(/VAR[\s\S]*?END_VAR/gi, '')
+        .replace(/\bAND\b/gi, '&&')
+        .replace(/\bOR\b/gi, '||')
+        .replace(/\bNOT\b/gi, '!')
+        .replace(/<>/g, '!=')
+        .replace(/GET_VAL\(\)/gi, "parseInt(document.getElementById('iw0-slider').value)")
+        .replace(/FLASH\((\d+)\)/gi, "FLASH($1)")
+        .replace(/TRUE/gi, 'true')
+        .replace(/FALSE/gi, 'false')
+        .replace(/\bTRUE\b/gi, 'true')
+        .replace(/\bFALSE\b/gi, 'false')
+        .replace(/:=/g, '=')
+        .replace(/ELSIF/gi, '} else if')
+        .replace(/IF\s+(.+?)\s*THEN/gi, 'if($1){')
+        .replace(/\)\s*THEN/gi, '){')
+        .replace(/ELSE/gi, '}else{')
+        .replace(/END_IF;?/gi, '}')
+        .replace(/\bMOD\b/gi, '%')
+        .replace(/\bXOR\b/gi, '!=')
+        .replace(/\bXOR\b/gi, '^')
+        .replace(/FOR\s+(\w+)\s*:=\s*(.+?)\s+TO\s+(.+?)\s+DO/gi, 'for(let $1=$2; $1<=$3; $1++){')
+        .replace(/END_FOR;?/gi, '}')
+        .replace(/WHILE\s+(.+?)\s+DO/gi, 'while($1){')
+        .replace(/END_WHILE;?/gi, '}')
+        .replace(/ABS\(/gi, 'Math.abs(')
+        .replace(/SQRT\(/gi, 'Math.sqrt(')
+        .replace(/SIN\(/gi, 'Math.sin(')
+        .replace(/COS\(/gi, 'Math.cos(')
+        .replace(/TAN\(/gi, 'Math.tan(')
+        .replace(/EXP\(/gi, 'Math.exp(')
+        .replace(/LN\(/gi, 'Math.log(')
+        .replace(/LIMIT\((.+?),\s*(.+?),\s*(.+?)\)/gi, 'Math.min(Math.max($2, $1), $3)')
+        .replace(/SEL\((.+?),\s*(.+?),\s*(.+?)\)/gi, '(($1) ? $3 : $2)')
+        .replace(/R_TRIG\((.+?)\)/gi, 'updateR_TRIG("$1", $1)')
+        .replace(/F_TRIG\((.+?)\)/gi, 'updateF_TRIG("$1", $1)')
+        .replace(/TON\((.+?),\s*(.+?),\s*(.+?)\)/gi, 'updateTON("$1", $2, $3)')
+        .replace(/TOF\((.+?),\s*(.+?),\s*(.+?)\)/gi, 'updateTOF("$1", $2, $3)');
+}
+
+function compilePLC() {
+    const lang = document.getElementById('lang-selector').value;
+    const sourceCode = document.getElementById('st-code').value.trim();
+
+    isCompiled = false;
+    compiledCode = null;
+
+    if (sourceCode === "" || sourceCode.toLowerCase() === "introdu cod:") {
+        document.getElementById('status').innerText = "Status: EROARE COMPILARE";
+        document.getElementById('status').style.color = "#dc3545";
+        addLog("Nu există cod de compilat.", "error");
+        return;
+    }
+
+    try {
+        const transformed = (lang === "PASCAL") 
+            ? compilePascal(sourceCode) 
+            : sourceCode;
+
+        // VERIFICARE REALĂ SINTAXĂ
+        new Function(transformed);
+
+        compiledCode = transformed;
+        isCompiled = true;
+
+        document.getElementById('status').innerText = `Status: COMPILAT (${lang})`;
+        document.getElementById('status').style.color = "#0056b3";
+        addLog(`Compilare reușită (${lang}).`);
+
+    } catch (e) {
+        compiledCode = null;
+        isCompiled = false;
+
+        document.getElementById('status').innerText = "Status: EROARE COMPILARE";
+        document.getElementById('status').style.color = "#dc3545";
+        addLog("Eroare compilare: " + e.message, "error");
+    }
+}
+
+function runPLC() {
+    if (cycleInterval) return;
+
+    if (!isCompiled || !compiledCode) {
+        document.getElementById('status').innerText = "Status: NECOMPILAT";
+        document.getElementById('status').style.color = "#dc3545";
+        addLog("Codul NU este compilat sau conține erori!", "error");
+        return;
+    }
+
+    const lang = document.getElementById('lang-selector').value;
+
+    document.getElementById('status').innerText = `Status: PLC RUN (${lang})`;
+    document.getElementById('status').style.color = "#28a745";
+    addLog(`Pornit mod ${lang}`);
+
+    cycleInterval = setInterval(() => {
+        try {
+            eval(compiledCode);
+
+            const msg = document.getElementById('hmi-msg');
+            const n = parseInt(document.getElementById('iw0-slider').value);
+
+            if (n < 15) {
+                msg.innerText = "LOW LEVEL!";
+                msg.style.color = "#ff4d4d";
+            } 
+			else if (n > 90) {
+				msg.innerText = "HIGH LEVEL!";
+				msg.style.color = "#ff4d4d";
+			} 
+			else {
+                msg.innerText = I0_0 && I0_1 ? "SYSTEM RUNNING" : "READY";
+                msg.style.color = I0_0 && I0_1 ? "#00ff00" : "#aaa";
+            }
+
+			// sincronizare output array
+			Q[0] = Q0_0;
+			Q[1] = Q0_1;
+			Q[2] = Q0_2;
+			Q[3] = Q0_3;
+
+			// update LED-uri
+			for (let i = 0; i < 4; i++) {
+				document.getElementById('led-out-' + i)
+					.classList.toggle('active', Q[i]);
+			}
+			
+			// ANDON
+			document.getElementById("andon-red").className = "andon-3d " + (Q0_0 ? "active-red" : "red-off");
+			document.getElementById("andon-orange").className = "andon-3d " + (Q0_1 ? "active-orange" : "orange-off");
+			document.getElementById("andon-green").className = "andon-3d " + (Q0_2 ? "active-green" : "green-off");
+			document.getElementById("andon-blue").className = "andon-3d " + (Q0_3 ? "active-blue" : "blue-off");
+        } catch (e) {
+            stopPLC("Eroare execuție: " + e.message);
+        }
+    }, 100);
+}
+
+function stopPLC(reason) {
+    clearInterval(cycleInterval);
+    cycleInterval = null;
+
+    document.getElementById('status').innerText = "Status: PLC STOP";
+    document.getElementById('status').style.color = "#dc3545";
+
+    if (reason) addLog(reason, "error");
+}
+
+function resetPLC() {
+    stopPLC("Resetat");
+
+	I = [false, false, false, false];
+	Q = [false, false, false, false];
+
+	I0_0 = I0_1 = I0_2 = I0_3 = false;
+	Q0_0 = Q0_1 = Q0_2 = Q0_3 = false;
+    compiledCode = null;
+    isCompiled = false;
+	// Reset Function Blocks
+    t1 = new TON();
+    t2 = new TOF();
+
+    document.querySelectorAll('.led').forEach(led => led.classList.remove('active'));
+    document.getElementById('st-code').value = "introdu cod:";
+    document.getElementById('status').innerText = "Status: Ready";
+    document.getElementById('status').style.color = "#666";
+    addLog("Sistem restabilit.");
+}
+</script>
+
+</body>
+</html>
